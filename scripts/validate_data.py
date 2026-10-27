@@ -142,7 +142,8 @@ def validate() -> dict[str, Any]:
                 if expected_price is not None and math.isfinite(price):
                     if not math.isclose(price, expected_price, rel_tol=0, abs_tol=0.005):
                         failures.append(
-                            f"order_items: unit_price does not match product {product_id} ({item_id})"
+                            "order_items: unit_price does not match product "
+                            f"{product_id} ({item_id})"
                         )
             except (TypeError, ValueError, OverflowError):
                 failures.append(f"order_items: invalid numeric value {item_id}")
