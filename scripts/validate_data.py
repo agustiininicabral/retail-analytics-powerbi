@@ -37,13 +37,25 @@ def read_csv(name: str) -> list[dict[str, str]]:
         raise FileNotFoundError(f"Missing required input: {path}")
     with path.open(newline="", encoding="utf-8-sig") as handle:
         reader = csv.DictReader(handle)
-        columns = set(reader.fieldnames or [])
-        if not columns:
+        original_columns = reader.fieldnames or []
+        if not original_columns:
             raise ValueError(f"{name}.csv has no header")
-        missing = sorted(REQUIRED_COLUMNS[name] - columns)
+        columns = [column.strip() for column in original_columns]
+        if any(not column for column in columns):
+            raise ValueError(f"{name}.csv contains a blank column name")
+        duplicates = sorted({column for column in columns if columns.count(column) > 1})
+        if duplicates:
+            raise ValueError(
+                f"{name}.csv has duplicate columns after trimming: {', '.join(duplicates)}"
+            )
+        reader.fieldnames = columns
+        missing = sorted(REQUIRED_COLUMNS[name] - set(columns))
         if missing:
             raise ValueError(f"{name}.csv is missing required columns: {', '.join(missing)}")
-        return list(reader)
+        return [
+            {key: (value or "").strip() for key, value in row.items() if key is not None}
+            for row in reader
+        ]
 
 
 def validate() -> dict[str, Any]:
