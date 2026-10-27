@@ -1,13 +1,8 @@
 import csv
-import sys
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "scripts"))
-# isort: split
-import generate_data  # noqa: E402
-import validate_data  # noqa: E402
+from scripts import generate_data, validate_data
 
 
 
