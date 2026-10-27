@@ -94,7 +94,9 @@ def test_validator_trims_headers_and_values_for_relationship_checks(tmp_path, mo
     with customers_path.open("w", newline="", encoding="utf-8") as handle:
         csv.writer(handle).writerows(rows)
 
-    result = run_validator(data, tmp_path, monkeypatch)
+    monkeypatch.setattr(validate_data, "DATA", tmp_path)
+    monkeypatch.setattr(validate_data, "REPORT", tmp_path / "report.json")
+    result = validate_data.validate()
 
     assert result["status"] == "PASS"
     assert result["failure_count"] == 0
@@ -110,7 +112,9 @@ def test_validator_rejects_duplicate_headers_after_trimming(tmp_path, monkeypatc
     with products_path.open("w", newline="", encoding="utf-8") as handle:
         csv.writer(handle).writerows(rows)
 
-    result = run_validator(data, tmp_path, monkeypatch)
+    monkeypatch.setattr(validate_data, "DATA", tmp_path)
+    monkeypatch.setattr(validate_data, "REPORT", tmp_path / "report.json")
+    result = validate_data.validate()
 
     assert result["status"] == "FAIL"
     assert any("duplicate columns after trimming" in failure for failure in result["failures"])
