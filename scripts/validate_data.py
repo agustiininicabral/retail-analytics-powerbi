@@ -80,7 +80,11 @@ def validate():
 
 def main():
     report = validate()
-    print(f"{report['status']}: {sum(report['row_counts'].values())} rows; {report['failure_count']} failures")
+    total_rows = sum(report["row_counts"].values())
+    print(
+        f"{report['status']}: {total_rows} rows; "
+        f"{report['failure_count']} failures"
+    )
     if report["failures"]:
         for failure in report["failures"]:
             print(f"- {failure}")
