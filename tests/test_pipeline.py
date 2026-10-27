@@ -1,3 +1,4 @@
+# ruff: noqa: I001 -- the test imports repository scripts as a namespace package.
 import csv
 from pathlib import Path
 from tempfile import TemporaryDirectory
