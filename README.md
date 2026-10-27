@@ -36,7 +36,7 @@ python scripts/validate_data.py
 python -m pytest -q
 ```
 
-The generator uses a fixed seed and creates the CSV files under `data/raw/`. The validator exits non-zero when required fields, key uniqueness, referential integrity, or numeric constraints fail. Generated data and reports are reproducible; they are not evidence of real-world business performance.
+The generator uses a fixed seed and creates the CSV files under `data/raw/`. The validator trims CSV headers and field values before checking keys and relationships, rejects blank/duplicate headers, and exits non-zero when required fields, key uniqueness, referential integrity, dates, or numeric business constraints fail. Generated data and reports are reproducible; they are not evidence of real-world business performance.
 
 ## Repository map
 

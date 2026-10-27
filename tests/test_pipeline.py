@@ -81,3 +81,66 @@ def test_validator_rejects_order_line_price_that_differs_from_catalog(
 
     assert result["status"] == "FAIL"
     assert any("unit_price does not match product" in failure for failure in result["failures"])
+
+
+def test_validator_trims_headers_and_values_for_relationship_checks(tmp_path, monkeypatch):
+    data = generate_data.generate(23, 10, 25)
+    write_dataset(data, tmp_path)
+    customers_path = tmp_path / "customers.csv"
+    with customers_path.open(newline="", encoding="utf-8") as handle:
+        rows = list(csv.reader(handle))
+    rows[0][0] = " customer_id "
+    rows[1][0] = f" {rows[1][0]} "
+    with customers_path.open("w", newline="", encoding="utf-8") as handle:
+        csv.writer(handle).writerows(rows)
+
+    monkeypatch.setattr(validate_data, "DATA", tmp_path)
+    monkeypatch.setattr(validate_data, "REPORT", tmp_path / "report.json")
+    result = validate_data.validate()
+
+    assert result["status"] == "PASS"
+    assert result["failure_count"] == 0
+
+
+def test_validator_rejects_duplicate_headers_after_trimming(tmp_path, monkeypatch):
+    data = generate_data.generate(29, 10, 25)
+    write_dataset(data, tmp_path)
+    products_path = tmp_path / "products.csv"
+    with products_path.open(newline="", encoding="utf-8") as handle:
+        rows = list(csv.reader(handle))
+    rows[0][1] = " product_id "
+    with products_path.open("w", newline="", encoding="utf-8") as handle:
+        csv.writer(handle).writerows(rows)
+
+    monkeypatch.setattr(validate_data, "DATA", tmp_path)
+    monkeypatch.setattr(validate_data, "REPORT", tmp_path / "report.json")
+    result = validate_data.validate()
+
+    assert result["status"] == "FAIL"
+    assert any("duplicate columns after trimming" in failure for failure in result["failures"])
+
+
+def test_validator_rejects_orphan_customer_and_invalid_discount(
+    tmp_path, monkeypatch
+):
+    data = generate_data.generate(31, 10, 25)
+    data["orders"][0]["customer_id"] = "C99999"
+    data["order_items"][0]["discount_pct"] = 1.0
+
+    result = run_validator(data, tmp_path, monkeypatch)
+
+    assert result["status"] == "FAIL"
+    assert any("unknown customer C99999" in failure for failure in result["failures"])
+    assert any("invalid discount" in failure for failure in result["failures"])
+
+
+def test_validator_main_returns_nonzero_for_invalid_dataset(tmp_path, monkeypatch):
+    data = generate_data.generate(37, 10, 25)
+    data["order_items"][0]["discount_pct"] = 1.0
+    write_dataset(data, tmp_path)
+    monkeypatch.setattr(validate_data, "DATA", tmp_path)
+    monkeypatch.setattr(validate_data, "REPORT", tmp_path / "report.json")
+
+    assert validate_data.main() == 1
+    report = (tmp_path / "report.json").read_text(encoding="utf-8")
+    assert '"status": "FAIL"' in report
